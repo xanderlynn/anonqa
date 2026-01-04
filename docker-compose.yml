@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: anonqa
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    environment:
+      DB_USER: admin
+      DB_PASSWORD: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: anonqa
+
+volumes:
+  postgres_data:
