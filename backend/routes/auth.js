@@ -6,8 +6,12 @@ const { signToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-const BCRYPT_ROUNDS = 12;
+const BCRYPT_ROUNDS = process.env.NODE_ENV === 'test' ? 1 : 12;
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '8h';
+
+// Pre-computed valid bcrypt hash for timing-safe login when user does not exist.
+// Using the same cost factor ensures consistent response time regardless of user existence.
+const DUMMY_HASH = bcrypt.hashSync('__placeholder_not_real__', BCRYPT_ROUNDS);
 
 router.post(
   '/register',
@@ -59,9 +63,13 @@ router.post(
 
       // Use constant-time comparison to prevent timing attacks (bcrypt provides this).
       // Always run bcrypt even if user is not found to prevent user enumeration via timing.
-      const dummyHash = '$2b$12$invalidhashpaddingtomakeconstanttimexxxxxxxxxxxxxxxxxxx';
-      const hashToCompare = user ? user.password_hash : dummyHash;
-      const valid = await bcrypt.compare(password, hashToCompare);
+      const hashToCompare = user ? user.password_hash : DUMMY_HASH;
+      let valid = false;
+      try {
+        valid = await bcrypt.compare(password, hashToCompare);
+      } catch {
+        valid = false;
+      }
 
       if (!user || !valid) {
         return res.status(401).json({ error: 'Invalid credentials' });

@@ -4,9 +4,11 @@
   "main": "app.js",
   "scripts": {
     "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
-    "start-backend": "node backend/app.js",
+    "start-backend": "node backend/server.js",
     "start-frontend": "cd frontend && npm start",
-    "dev": "nodemon backend/app.js"
+    "dev": "nodemon backend/server.js",
+    "test": "playwright test",
+    "test:report": "playwright show-report"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +26,9 @@
     "pg": "^8.16.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "concurrently": "^7.6.0",
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "pg-mem": "^3.0.14"
   }
 }

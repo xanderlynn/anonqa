@@ -6,7 +6,7 @@ const { authenticate, requireRole, verifySessionAccessToken, signToken } = requi
 
 const router = express.Router();
 
-const BCRYPT_ROUNDS = 12;
+const BCRYPT_ROUNDS = process.env.NODE_ENV === 'test' ? 1 : 12;
 const SESSION_TOKEN_EXPIRY = '4h';
 
 function isValidId(id) {

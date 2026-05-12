@@ -1,4 +1,5 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/db');
@@ -6,10 +7,9 @@ const { authenticate, verifySessionAccessToken } = require('../middleware/auth')
 
 const router = express.Router();
 
-// Stricter rate limit for upvote to prevent vote inflation
 const upvoteLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 30,
+  windowMs: 60 * 60 * 1000,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many upvotes, please try again later' },
@@ -61,7 +61,6 @@ router.get('/sessions/:sessionId/questions', async (req, res) => {
   // Populate req.user from Bearer token if present (optional auth)
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    const jwt = require('jsonwebtoken');
     try {
       req.user = jwt.verify(authHeader.slice(7), process.env.JWT_SECRET, {
         algorithms: ['HS256'],
@@ -113,7 +112,6 @@ router.post(
     // Optional auth — populate req.user if Bearer token provided
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const jwt = require('jsonwebtoken');
       try {
         req.user = jwt.verify(authHeader.slice(7), process.env.JWT_SECRET, {
           algorithms: ['HS256'],
