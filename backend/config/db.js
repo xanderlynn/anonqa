@@ -1,25 +1,28 @@
 const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
-// Load environment variables
 dotenv.config();
 
-// Create a PostgreSQL connection pool
+const sslConfig =
+  process.env.DB_SSL === 'true'
+    ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
+    : false;
+
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  port: parseInt(process.env.DB_PORT, 10) || 5432,
+  ssl: sslConfig,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
-// Test the database connection
-pool.on('connect', () => {
-  console.log('Connected to PostgreSQL');
-});
-
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle PostgreSQL client', err);
+pool.on('error', () => {
+  // Error details are intentionally not logged here to avoid leaking connection info
+  console.error('Unexpected error on idle PostgreSQL client');
   process.exit(-1);
 });
 
